@@ -1,1 +1,1 @@
-__author__ = 'Krwemil'
+from chembl import *
