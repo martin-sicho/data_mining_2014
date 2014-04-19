@@ -1,20 +1,22 @@
 from xml.dom import minidom
-import requests, json, re, os, pickle
+import requests, json, re, os, pickle, numpy, logging, sys
 import xml.etree.ElementTree as etree
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem import PropertyMol
+from standardise import standardise
+from utilities import *
 
-def isFloat(x):
-    try:
-        float(x)
-        return True
-    except ValueError:
-        return False
+XML_FILENAME = "actives_chembl.xml"
+PICKLE_FILENAME = XML_FILENAME[:-4] + ".p"
 
-def loadChEMBLData(uniprot_accesion, IC_50_threshold, folder):
-    filename = "actives_chembl.xml"
-    if os.path.exists(folder + filename):
-        return
-    if not(os.path.exists(folder)):
-        os.makedirs(folder)
+def loadChEMBLData(uniprot_accesion, IC_50_threshold, data_folder):
+    filename = XML_FILENAME
+    xml_path = data_folder + filename
+    if os.path.exists(xml_path) and os.path.exists(PICKLE_FILENAME):
+        return pickle.load(open(PICKLE_FILENAME, "rb"))
+    if not(os.path.exists(data_folder)):
+        os.makedirs(data_folder)
     print "Getting bioactivity data from ChEMBL database..."
     # 1. Use UniProt accession to get target details
     target_data = json.loads(requests.get("https://www.ebi.ac.uk/chemblws/targets/uniprot/%s.json" % uniprot_accesion).content)
@@ -45,29 +47,58 @@ def loadChEMBLData(uniprot_accesion, IC_50_threshold, folder):
 
         # get SMILES for each molecule
         smiles = cmpd_data.findall("./smiles")[0].text
-        compounds[chemblid] = smiles
+        compounds[chemblid] = {'smiles' : smiles}
         print "Smiles: %s" % smiles
     #tree = etree.ElementTree(root)
     #tree.write(folder + filename, encoding="utf8")
-    with open(folder + filename, "w") as outfile:
+    with open(xml_path, "w") as outfile:
         outfile.write(minidom.parseString(etree.tostring(root)).toprettyxml(encoding="UTF-8").encode("utf8"))
-    pickle.dump(compounds, open(folder + filename[:-4] + ".p", "w"))
+    pickle.dump(compounds, open(data_folder + PICKLE_FILENAME, "wb"))
+    print "Done. Downloaded data for " + str(len(compounds)) + " compounds."
+    return compounds
 
+def computeConsensualIC50(compounds, data_folder):
+    tree = etree.parse(data_folder + XML_FILENAME)
+    data = tree.getroot()
+    for chemblid in compounds.keys():
+        ic50_data = data.findall(".//compound[chemblId='%s']/ic50" % chemblid)
+        ic50_values = []
+        for ic50 in ic50_data:
+            ic50_values.append(float(ic50.text))
+        median = numpy.median(ic50_values)
+        mean = numpy.mean(ic50_values)
+        compounds[chemblid]['ic50'] = median + mean / 2.0
+    pickle.dump(compounds, open(data_folder + PICKLE_FILENAME, "wb"))
+    return compounds
 
-
-# # 4. Get assay details foe Ki actvity types
-#
-# print """
-#
-# # =========================================================
-# # 4. Get assay details foe Ki actvity types
-# # =========================================================
-# """
-#
-# for bioactivity in [record for record in bioactivity_data['bioactivities'] if re.search('Ki', record['bioactivity_type'], re.IGNORECASE)]:
-#
-#     print "Assay CHEMBLID: %s" % bioactivity['assay_chemblid']
-#
-#     assay_data = json.loads(requests.get("https://www.ebi.ac.uk/chemblws/assays/%s.json" % bioactivity['assay_chemblid']).content)
-#
-#     print "  %s" % assay_data['assay']['assayDescription']
+def appendRDKitMols(compounds, data_folder):
+    print "Getting rdkit molecules..."
+    failed_counter = 0
+    for chemblid in compounds.keys():
+        mol = Chem.MolFromSmiles(compounds[chemblid]['smiles'])
+        if mol == None:
+            print "RDKit molecule generation failed for " + chemblid
+            del compounds[chemblid]
+            failed_counter+=1
+            continue
+        AllChem.EmbedMolecule(mol)
+        AllChem.UFFOptimizeMolecule(mol)
+        pmol = PropertyMol.PropertyMol(mol)
+        pmol.SetProp("_Name", chemblid)
+        if not('win' in sys.platform):
+            standardised_mol = None
+            try:
+                standardised_mol = standardise.apply(pmol)
+            except standardise.StandardiseException as e:
+                logging.warn(e.message)
+            print standardised_mol
+            compounds[chemblid]['RDKit'] = standardised_mol
+        else:
+            compounds[chemblid]['RDKit'] = pmol
+        mol_path = data_folder + "actives_chembl_structures/" + chemblid + ".mol"
+        if not(os.path.exists(mol_path[:mol_path.rindex('/')])):
+            os.makedirs(mol_path[:mol_path.rindex('/')])
+        with open(mol_path, "w") as outfile:
+            outfile.write(Chem.MolToMolBlock(pmol))
+    pickle.dump(compounds, open(data_folder + PICKLE_FILENAME, "wb"))
+    print "Done. Saved data for " + str(len(compounds)) + " compounds (" + str(failed_counter) + " molecules failed)."
