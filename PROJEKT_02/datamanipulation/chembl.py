@@ -54,7 +54,7 @@ def loadChEMBLData(uniprot_accesion, IC_50_threshold, data_folder):
     with open(xml_path, "w") as outfile:
         outfile.write(minidom.parseString(etree.tostring(root)).toprettyxml(encoding="UTF-8").encode("utf8"))
     pickle.dump(compounds, open(data_folder + PICKLE_FILENAME, "wb"))
-    print "Done. Downloaded data for " + str(len(compounds)) + " compounds."
+    print "Done. Downloaded data for " + str(len(compounds)) + " active compounds."
     return compounds
 
 def computeConsensualIC50(compounds, data_folder):
@@ -95,10 +95,11 @@ def appendRDKitMols(compounds, data_folder):
             compounds[chemblid]['RDKit'] = standardised_mol
         else:
             compounds[chemblid]['RDKit'] = pmol
+        compounds[chemblid]['active'] = True
         mol_path = data_folder + "actives_chembl_structures/" + chemblid + ".mol"
         if not(os.path.exists(mol_path[:mol_path.rindex('/')])):
             os.makedirs(mol_path[:mol_path.rindex('/')])
         with open(mol_path, "w") as outfile:
             outfile.write(Chem.MolToMolBlock(pmol))
     pickle.dump(compounds, open(data_folder + PICKLE_FILENAME, "wb"))
-    print "Done. Saved data for " + str(len(compounds)) + " compounds (" + str(failed_counter) + " molecules failed)."
+    print "Done. Saved data for " + str(len(compounds)) + " active compounds (" + str(failed_counter) + " molecules failed)."
