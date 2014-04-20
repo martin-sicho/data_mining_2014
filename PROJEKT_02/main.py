@@ -1,11 +1,6 @@
 import sys, os, pickle
-from datageneration import chembl, dud
-
-ACCESSION = 'P03372'
-IC_50_THRESHOLD = 30
-DATA_FOLDER = "data/"
-RELOAD_DATA = False
-DECOYS_FILE_PATH = DATA_FOLDER + "decoys_DUD_structures.sdf"
+from datageneration import chembl, dud, fingerprinter
+from params.params import *
 
 def main(args):
     """
@@ -38,8 +33,11 @@ def main(args):
     actives.update(decoys)
     compounds_all = actives
 
-
-    pass
+    # compute Morgan fingerprints
+    if os.path.exists(PICKLE_PATH_ALL) and not RELOAD_DATA:
+        compounds_all = pickle.load(open(PICKLE_PATH_ALL, 'rb'))
+    else:
+        fingerprinter.appendMorganFingerprints(compounds_all, MORGAN_RADIUS)
 
 
 if __name__ == '__main__':

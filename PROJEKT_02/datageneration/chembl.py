@@ -6,9 +6,7 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import PropertyMol
 from standardise import standardise
 from utilities import *
-
-XML_FILENAME = "actives_chembl.xml"
-PICKLE_FILENAME = XML_FILENAME[:-4] + ".p"
+from params.params import *
 
 def loadChEMBLData(uniprot_accesion, IC_50_threshold, data_folder):
     filename = XML_FILENAME
