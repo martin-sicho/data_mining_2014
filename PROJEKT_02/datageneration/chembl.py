@@ -81,17 +81,18 @@ def appendRDKitMols(compounds, data_folder):
             continue
         AllChem.EmbedMolecule(mol)
         AllChem.UFFOptimizeMolecule(mol)
-        pmol = PropertyMol.PropertyMol(mol)
-        pmol.SetProp("_Name", chemblid)
         if not('win' in sys.platform):
             standardised_mol = None
             try:
-                standardised_mol = standardise.apply(pmol)
+                standardised_mol = standardise.apply(mol)
             except standardise.StandardiseException as e:
                 logging.warn(e.message)
-            print standardised_mol
-            compounds[chemblid]['RDKit'] = standardised_mol
+            pmol = PropertyMol.PropertyMol(standardised_mol)
+            pmol.SetProp("_Name", chemblid)
+            compounds[chemblid]['RDKit'] = pmol
         else:
+            pmol = PropertyMol.PropertyMol(mol)
+            pmol.SetProp("_Name", chemblid)
             compounds[chemblid]['RDKit'] = pmol
         compounds[chemblid]['active'] = True
         mol_path = data_folder + "actives_chembl_structures/" + chemblid + ".mol"

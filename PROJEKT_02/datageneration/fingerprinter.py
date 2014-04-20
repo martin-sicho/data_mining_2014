@@ -1,5 +1,4 @@
 import pickle
-from rdkit import Chem
 from rdkit.Chem import AllChem
 from params.params import *
 

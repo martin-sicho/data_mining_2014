@@ -1,6 +1,10 @@
-import sys, os, pickle
+import sys
+import os
+import pickle
+
 from datageneration import chembl, dud, fingerprinter
-from params.params import *
+from datageneration.params.params import *
+
 
 def main(args):
     """
@@ -14,6 +18,8 @@ def main(args):
 
     # load actives from ChEMBL
     actives = {}
+    if not os.path.exists(DATA_FOLDER):
+        os.mkdir(DATA_FOLDER)
     actives_file = [x for x in os.listdir(DATA_FOLDER) if x.startswith('actives_chembl') and x.endswith('.p')]
     if not actives_file or RELOAD_DATA:
         actives = chembl.loadChEMBLData(ACCESSION, IC_50_THRESHOLD, DATA_FOLDER)
