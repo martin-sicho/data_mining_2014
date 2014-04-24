@@ -9,7 +9,7 @@ def appendMorganFingerprints(compounds, radius):
         info = {}
         #fp = AllChem.GetMorganFingerprint(mol, radius, bitInfo=info)
         fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=1024, bitInfo=info)
-        compounds[cmnd_id]['fingerprint'] = fp
-        compounds[cmnd_id]['fingerprint_info'] = info
-    pickle.dump(compounds, open(PICKLE_PATH_ALL, "wb"))
+        compounds[cmnd_id]['fingerprint'] = fp #list(fp.ToBitString())
+        #compounds[cmnd_id]['fingerprint_info'] = info
+    pickle.dump(compounds, open(MERGED_DATASET_PATH, "wb"))
     print "Done."
