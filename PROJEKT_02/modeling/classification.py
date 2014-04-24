@@ -2,7 +2,7 @@ import numpy
 from params import *
 from sklearn.naive_bayes import GaussianNB
 from sklearn import cross_validation
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, roc_curve, auc
 
 def naiveBayesClassification(compounds_all):
     print "Building naive Bayes classifier (" + str(FOLDS) + "-fold cross-validation)..."
@@ -21,6 +21,7 @@ def naiveBayesClassification(compounds_all):
     scores = []
     models = []
     true_activities = []
+    aucs = []
     for train, test in kfold_xv_strat:
         fingerprint_data_train = fingerprint_data[train]
         fingerprint_data_test = fingerprint_data[test]
@@ -34,11 +35,20 @@ def naiveBayesClassification(compounds_all):
         # testing
         activity_data_predictions = classifier.predict(fingerprint_data_test)
         models.append(classifier)
-        probabilities.append(classifier.predict_proba(fingerprint_data_test))
+
+        probability_estimates = classifier.predict_proba(fingerprint_data_test)
+        probabilities.append(probability_estimates)
+
         scores.append(classifier.score(fingerprint_data_test, activity_data_test))
+
         activity_confusion_matrix = confusion_matrix(activity_data_test, activity_data_predictions)
         confusion_matrices.append(activity_confusion_matrix)
+
         true_activities.append(activity_data_test)
+
+        # ROC curves
+        fpr, tpr, thresholds = roc_curve(activity_data_test, probability_estimates[:, 1])
+        aucs.append(auc(fpr, tpr))
     print "Done."
     return {
         'confusion_matrices' : confusion_matrices
@@ -46,4 +56,5 @@ def naiveBayesClassification(compounds_all):
         , 'scores' : scores
         , 'models' : models
         , 'true_activity_data' : true_activities
+        , 'AUCs' : aucs
     }

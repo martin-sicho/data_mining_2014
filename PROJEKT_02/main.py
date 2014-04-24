@@ -51,19 +51,20 @@ def main(args):
         classification_results = classification.naiveBayesClassification(compounds_all)
         print "Saving results..."
         pickle.dump(classification_results, open(RESULTS_SAVE_FILE_PATH, 'wb'))
+        print "Finished analysis."
     else:
+        print "Loading previous results..."
         classification_results = pickle.load(open(RESULTS_SAVE_FILE_PATH, 'rb'))
-
-    print "Finished analysis."
 
     # having fun with the results
     best_model_idx = classification_results['scores'].index(max(classification_results['scores']))
-    print "Best model:"
+    print "BEST MODEL DETAILS:"
     print "Confusion matrix: "
     print classification_results['confusion_matrices'][best_model_idx]
-    for idx, probabilities in enumerate(classification_results['probabilities'][best_model_idx]):
-        print "Active probability: " + str(probabilities[1])
-        print "True Activity: " + str(classification_results['true_activity_data'][best_model_idx][idx])
+    print "AUC: " + str(classification_results['AUCs'][best_model_idx])
+    # for idx, probabilities in enumerate(classification_results['probabilities'][best_model_idx]):
+    #     print "Active probability: " + str(probabilities[1])
+    #     print "True Activity: " + str(classification_results['true_activity_data'][best_model_idx][idx])
 
 if __name__ == '__main__':
     main(sys.argv)
