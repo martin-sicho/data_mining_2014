@@ -1,8 +1,9 @@
 import sys
 import os
 import pickle
+
 from datageneration import chembl, dud, fingerprinter
-from datageneration.params.params import *
+from datageneration.params import *
 from modeling import classification
 
 
@@ -14,6 +15,7 @@ def main(args):
         2. do the same with decoys from DUD
         3. merge both datasets
         4. compute fingerprints
+        5. train Naive Bayes Classifier
     """
 
     # load actives from ChEMBL

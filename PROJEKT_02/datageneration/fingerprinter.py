@@ -1,6 +1,8 @@
 import pickle
+from params import *
+
 from rdkit.Chem import AllChem
-from params.params import *
+
 
 def appendMorganFingerprints(compounds, radius):
     print "Computing Morgan Fingerprints..."

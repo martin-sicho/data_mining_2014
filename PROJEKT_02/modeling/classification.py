@@ -6,7 +6,6 @@ from sklearn.metrics import confusion_matrix, roc_curve, auc
 
 def naiveBayesClassification(compounds_all):
     print "Building naive Bayes classifier (" + str(FOLDS) + "-fold cross-validation)..."
-    print
     # get the data
     keys = compounds_all.keys()
     fingerprint_data = [compounds_all[cmpnd_id]['fingerprint'] for cmpnd_id in keys]

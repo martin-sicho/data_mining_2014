@@ -1,12 +1,22 @@
-from xml.dom import minidom
-import requests, json, re, os, pickle, numpy, logging, sys
 import xml.etree.ElementTree as etree
+from xml.dom import minidom
+import requests
+import json
+import re
+import os
+import pickle
+import logging
+import sys
+import numpy
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import PropertyMol
 from standardise import standardise
+
 from utilities import *
-from params.params import *
+from params import *
+
 
 def loadChEMBLData(uniprot_accesion, IC_50_threshold, data_folder):
     filename = XML_FILENAME
