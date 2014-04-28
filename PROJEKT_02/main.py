@@ -16,6 +16,7 @@ def main(args):
         3. merge both datasets
         4. compute fingerprints
         5. train Naive Bayes Classifier
+        6. use SVM to predict IC50 values of active molecules
     """
 
     # load actives from ChEMBL
@@ -43,6 +44,7 @@ def main(args):
 
     # compute Morgan fingerprints
     if os.path.exists(MERGED_DATASET_PATH) and not RELOAD_DATA:
+        print "Loading previously created dataset..."
         compounds_all = pickle.load(open(MERGED_DATASET_PATH, 'rb'))
     else:
         fingerprinter.appendMorganFingerprints(compounds_all, MORGAN_RADIUS)
@@ -58,15 +60,11 @@ def main(args):
         print "Loading previous results..."
         classification_results = pickle.load(open(RESULTS_SAVE_FILE_PATH, 'rb'))
 
-    # having fun with the results
-    best_model_idx = classification_results['scores'].index(max(classification_results['scores']))
-    print "BEST MODEL DETAILS:"
-    print "Confusion matrix: "
-    print classification_results['confusion_matrices'][best_model_idx]
-    print "AUC: " + str(classification_results['AUCs'][best_model_idx])
-    # for idx, probabilities in enumerate(classification_results['probabilities'][best_model_idx]):
-    #     print "Active probability: " + str(probabilities[1])
-    #     print "True Activity: " + str(classification_results['true_activity_data'][best_model_idx][idx])
+    # have fun with the classification results
+    classification.playWithResults(classification_results)
+
+    # SVM part
+    
 
 if __name__ == '__main__':
     main(sys.argv)

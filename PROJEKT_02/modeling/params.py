@@ -1,2 +1,5 @@
+# NB CLASSIFICATION #
 # crossvalidation params
-FOLDS = 10
+NB_FOLDS = 10
+
+# SVM regression #

@@ -5,7 +5,7 @@ from sklearn import cross_validation
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 
 def naiveBayesClassification(compounds_all):
-    print "Building naive Bayes classifier (" + str(FOLDS) + "-fold cross-validation)..."
+    print "Building naive Bayes classifier (" + str(NB_FOLDS) + "-fold cross-validation)..."
     # get the data
     keys = compounds_all.keys()
     fingerprint_data = [compounds_all[cmpnd_id]['fingerprint'] for cmpnd_id in keys]
@@ -14,7 +14,7 @@ def naiveBayesClassification(compounds_all):
     activity_data = numpy.asarray(activity_data)
 
     # perform K-fold cross-validation
-    kfold_xv_strat = cross_validation.StratifiedKFold(activity_data, FOLDS, indices=False)
+    kfold_xv_strat = cross_validation.StratifiedKFold(activity_data, NB_FOLDS, indices=False)
     confusion_matrices = []
     probabilities = []
     scores = []
@@ -57,3 +57,13 @@ def naiveBayesClassification(compounds_all):
         , 'true_activity_data' : true_activities
         , 'AUCs' : aucs
     }
+
+def playWithResults(classification_results):
+    best_model_idx = classification_results['scores'].index(max(classification_results['scores']))
+    print "BEST MODEL DETAILS:"
+    print "Confusion matrix: "
+    print classification_results['confusion_matrices'][best_model_idx]
+    print "AUC: " + str(classification_results['AUCs'][best_model_idx])
+    # for idx, probabilities in enumerate(classification_results['probabilities'][best_model_idx]):
+    #     print "Active probability: " + str(probabilities[1])
+    #     print "True Activity: " + str(classification_results['true_activity_data'][best_model_idx][idx])
