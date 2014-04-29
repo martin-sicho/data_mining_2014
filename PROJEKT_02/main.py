@@ -4,7 +4,7 @@ import pickle
 
 from datageneration import chembl, dud, fingerprinter
 from datageneration.params import *
-from modeling import classification
+from modeling import classification, regression
 
 
 def main(args):
@@ -16,7 +16,7 @@ def main(args):
         3. merge both datasets
         4. compute fingerprints
         5. train Naive Bayes Classifier
-        6. use SVM to predict IC50 values of active molecules
+        6. use SVM to predict IC50 values of active molecules (SV regression)
     """
 
     # load actives from ChEMBL
@@ -39,8 +39,9 @@ def main(args):
         decoys = dud.getDecoys(DECOYS_SDF_FILE_PATH)
 
     # merge both data sets
-    actives.update(decoys)
-    compounds_all = actives
+    compounds_all = {}
+    compounds_all.update(actives)
+    compounds_all.update(decoys)
 
     # compute Morgan fingerprints
     if os.path.exists(MERGED_DATASET_PATH) and not RELOAD_DATA:
@@ -52,7 +53,7 @@ def main(args):
     # train and cross-validate multiple Naive Bayes Classifiers
     classification_results = dict()
     if not os.path.exists(RESULTS_SAVE_FILE_PATH):
-        classification_results = classification.naiveBayesClassification(compounds_all)
+        classification_results = classification.naiveBayesClassifierTraining(compounds_all)
         print "Saving results..."
         pickle.dump(classification_results, open(RESULTS_SAVE_FILE_PATH, 'wb'))
         print "Finished analysis."
@@ -63,8 +64,14 @@ def main(args):
     # have fun with the classification results
     classification.playWithResults(classification_results)
 
-    # SVM part
-    
+    # Support vector regression
+    print "STARTING SUPPORT VECTOR REGRESSION..."
+    actives = { cmpndid : compounds_all[cmpndid] for cmpndid in compounds_all.keys() if compounds_all[cmpndid]['active']}
+    decoys = { cmpndid : compounds_all[cmpndid] for cmpndid in compounds_all.keys() if not compounds_all[cmpndid]['active']}
+    regression_results = regression.supportVectorRegression(actives)
+
+    # do something with the regression results
+    regression.playWithResults(regression_results)
 
 if __name__ == '__main__':
     main(sys.argv)

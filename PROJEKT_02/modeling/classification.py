@@ -4,7 +4,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn import cross_validation
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 
-def naiveBayesClassification(compounds_all):
+def naiveBayesClassifierTraining(compounds_all):
     print "Building naive Bayes classifier (" + str(NB_FOLDS) + "-fold cross-validation)..."
     # get the data
     keys = compounds_all.keys()
@@ -56,6 +56,8 @@ def naiveBayesClassification(compounds_all):
         , 'models' : models
         , 'true_activity_data' : true_activities
         , 'AUCs' : aucs
+        , 'fingerprint_data' : fingerprint_data
+        , 'activity_data' : activity_data
     }
 
 def playWithResults(classification_results):
