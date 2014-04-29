@@ -62,7 +62,7 @@ def main(args):
         classification_results = pickle.load(open(RESULTS_SAVE_FILE_PATH, 'rb'))
 
     # have fun with the classification results
-    classification.playWithResults(classification_results)
+    #classification.playWithResults(classification_results)
 
     # Support vector regression
     print "STARTING SUPPORT VECTOR REGRESSION..."

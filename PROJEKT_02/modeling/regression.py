@@ -37,8 +37,8 @@ def supportVectorRegression(actives):
 
         clf.fit(fingerprint_data_train, activity_data_train)
         models.append(clf)
-        predicted_values.append([10E9 * 10 ** (-x) for x in clf.predict(fingerprint_data_test)])
-        true_values.append([10E9 * 10 ** (-x) for x in activity_data_test])
+        predicted_values.append(clf.predict(fingerprint_data_test))
+        true_values.append(activity_data_test)
         scores.append(clf.score(fingerprint_data_test, activity_data_test))
     return {
         'predicted_values' : predicted_values
@@ -46,9 +46,9 @@ def supportVectorRegression(actives):
         , 'scores' : scores
         , 'models' : models
         , 'fingerprint_data' : fingerprint_data
-        , 'activity_data' : [10E9 * 10 ** (-x) for x in activity_data]
+        , 'activity_data' : activity_data
         , 'fingerprint_data_validation_set' : fingerprint_data_validation_set
-        , 'activity_data_validation_set' : [10E9 * 10 ** (-x) for x in activity_data_validation_set]
+        , 'activity_data_validation_set' : activity_data_validation_set
         , 'final_model' : clf.fit(fingerprint_data, activity_data)
     }
 
@@ -59,9 +59,9 @@ def playWithResults(results):
     predicted_best = results['predicted_values'][best_model_idx]
     true_best = results['true_values'][best_model_idx]
     final_model = results['final_model']
-    predictions_all = [10E9 * 10 ** (-x) for x in final_model.predict(results['fingerprint_data_validation_set'])]
+    predictions_all = final_model.predict(results['fingerprint_data_validation_set'])
     print "Score of final model on the validation set: " + str(final_model.score(results['fingerprint_data_validation_set'], results['activity_data_validation_set']))
-    xspan = (0,40)
+    xspan = (8,11)
     plt.plot((xspan[0],xspan[1]), (xspan[0],xspan[1]), linestyle='--')
     plt.plot(results['activity_data_validation_set'], predictions_all, marker='o', linestyle='None', label="Validation set performance")
     plt.plot(true_best, predicted_best, marker='+', linestyle='None', label="Predictions of the best model in the particular X-validation step")
