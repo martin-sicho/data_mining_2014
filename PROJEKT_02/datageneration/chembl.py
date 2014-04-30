@@ -66,6 +66,7 @@ def loadChEMBLData(uniprot_accesion, IC_50_threshold, data_folder):
     return compounds
 
 def computeConsensualIC50(compounds, data_folder):
+    print "Computing consensual IC50 values..."
     tree = etree.parse(data_folder + XML_FILENAME)
     data = tree.getroot()
     for chemblid in compounds.keys():
@@ -74,8 +75,10 @@ def computeConsensualIC50(compounds, data_folder):
         for ic50 in ic50_data:
             ic50_values.append(float(ic50.text))
         median = numpy.median(ic50_values)
-        mean = numpy.mean(ic50_values)
-        compounds[chemblid]['ic50'] = median + mean / 2.0
+        # mean = numpy.mean(ic50_values)
+        # minimum = min(ic50_values)
+        # maximum = max(ic50_values)
+        compounds[chemblid]['ic50'] = median
     pickle.dump(compounds, open(data_folder + PICKLE_FILENAME, "wb"))
     return compounds
 

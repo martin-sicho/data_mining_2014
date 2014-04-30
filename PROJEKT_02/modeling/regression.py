@@ -14,7 +14,7 @@ def supportVectorRegression(actives):
 
     # cross-validate multiple regression models
     fingerprint_data, fingerprint_data_validation_set, activity_data, activity_data_validation_set = cross_validation.train_test_split(fingerprint_data, activity_data, test_size=VALIDATION_SET_SIZE)
-    kfold_xv_strat = cross_validation.KFold(len(activity_data), n_folds=SVR_FOLDS, indices=False)
+    kfold_xv_strat = cross_validation.KFold(len(activity_data), SVR_FOLDS, indices=False)
     clf = svm.SVR(
                         C=C
                       , epsilon=EPSILON
