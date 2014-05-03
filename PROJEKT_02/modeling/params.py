@@ -3,7 +3,7 @@
 NB_FOLDS = 10
 
 # Support Vector Regression (SVR) #
-VALIDATION_SET_SIZE = 0.3
+VALIDATION_SET_SIZE = 0.0
 SVR_FOLDS = 5
 C = 5
 EPSILON = 0.1

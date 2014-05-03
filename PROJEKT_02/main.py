@@ -2,7 +2,7 @@ import sys
 import os
 import pickle
 
-from datageneration import chembl, dud, fingerprinter
+from datageneration import chembl, dud, fingerprinter, utilities
 from datageneration.params import *
 from modeling import classification, regression
 
@@ -29,7 +29,7 @@ def main(args):
     else:
         actives = pickle.load(open(DATA_FOLDER_PATH + actives_file[0], 'rb'))
 
-    if not actives_file or RELOAD_DATA:
+    if not actives_file or RELOAD_DATA and not USE_DOWNLOADED_STRUCTS:
         chembl.computeConsensualIC50(actives, DATA_FOLDER_PATH)
         chembl.appendRDKitMols(actives, DATA_FOLDER_PATH)
 
@@ -50,30 +50,44 @@ def main(args):
         print "Loading previously created dataset..."
         compounds_all = pickle.load(open(MERGED_DATASET_PATH, 'rb'))
     else:
-        fingerprinter.appendMorganFingerprints(compounds_all, MORGAN_RADIUS)
+        fingerprinter.appendMorganFingerprints(compounds_all)
+
+    actives = { cmpndid : compounds_all[cmpndid] for cmpndid in compounds_all.keys() if compounds_all[cmpndid]['active']}
+    decoys = { cmpndid : compounds_all[cmpndid] for cmpndid in compounds_all.keys() if not compounds_all[cmpndid]['active']}
 
     # train and cross-validate multiple Naive Bayes Classifiers
     classification_results = dict()
-    if not os.path.exists(RESULTS_SAVE_FILE_PATH):
+    if not os.path.exists(CLASS_RESULTS_SAVE_FILE_PATH):
         classification_results = classification.naiveBayesClassifierTraining(compounds_all)
         print "Saving results..."
-        pickle.dump(classification_results, open(RESULTS_SAVE_FILE_PATH, 'wb'))
+        pickle.dump(classification_results, open(CLASS_RESULTS_SAVE_FILE_PATH, 'wb'))
         print "Finished analysis."
     else:
         print "Loading previous results..."
-        classification_results = pickle.load(open(RESULTS_SAVE_FILE_PATH, 'rb'))
+        classification_results = pickle.load(open(CLASS_RESULTS_SAVE_FILE_PATH, 'rb'))
 
     # have fun with the classification results
-    classification.playWithResults(classification_results)
+    #classification.playWithResults(classification_results)
+
+    # cluster actives according to their similarity
+    actives_testset = dict()
+    if CLUSTER:
+        clusters = utilities.clusterMols(actives)
+        actives_kept = dict()
+        for cluster in clusters:
+            actives_kept[cluster[0]] = actives[cluster[0]]
+            remains = cluster[1:]
+            actives_filtered_out = {chmblid : actives[chmblid] for chmblid in remains}
+            actives_testset.update(actives_filtered_out)
+        actives = actives_kept
 
     # Support vector regression
+    # TODO: dodelat aplikacni domenu
     print "STARTING SUPPORT VECTOR REGRESSION..."
-    actives = { cmpndid : compounds_all[cmpndid] for cmpndid in compounds_all.keys() if compounds_all[cmpndid]['active']}
-    decoys = { cmpndid : compounds_all[cmpndid] for cmpndid in compounds_all.keys() if not compounds_all[cmpndid]['active']}
     regression_results = regression.supportVectorRegression(actives)
 
     # do something with the regression results
-    regression.playWithResults(regression_results)
+    regression.playWithResults(regression_results, decoys, actives_testset)
 
 if __name__ == '__main__':
     main(sys.argv)
