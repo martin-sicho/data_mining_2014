@@ -6,17 +6,22 @@ from datageneration import chembl, dud, fingerprinter, utilities
 from datageneration.params import *
 from modeling import classification, regression
 
-
-def main(args):
+def trainModels():
     """
-        1. load ChEMBL data for molecules with IC50 (in nM) less than or equal to IC_50_THRESHOLD and convert them to RDKit molecules
-            - all molecules are saved to tha data/ directory
-            - if the pickle file already exists, no action is taken unless RELOAD_CHEMBL_DATA = True
-        2. do the same with decoys from DUD
-        3. merge both datasets
-        4. compute fingerprints
-        5. train Naive Bayes Classifier
-        6. use SVM to predict IC50 values of active molecules (SV Regression)
+        Uses datageneration and modeling modules to train and validate models for a specific target.
+        Use datageneration.params and modeling.params to set training and validation options.
+
+        This method roughly proceeds as follows:
+            1. load ChEMBL data for molecules with IC50 (in nM) less than or equal to IC_50_THRESHOLD and convert them to RDKit molecules
+                - all molecules are saved to tha data/ directory
+                - if the pickle file already exists, no action is taken unless RELOAD_CHEMBL_DATA = True
+            2. do the same with decoys from DUD
+            3. merge both datasets
+            4. compute fingerprints
+            5. train Naive Bayes Classifier
+            6. cluster active molecules -> pick a representative compound of each cluster for training
+            7. use SVM to predict IC50 values of active molecules (SV Regression)
+            8. test regression model on the remaining molecules from the clusters
     """
 
     # load actives from ChEMBL
@@ -69,7 +74,7 @@ def main(args):
     # have fun with the classification results
     #classification.playWithResults(classification_results)
 
-    # cluster actives according to their similarity
+    # cluster actives according to their similarity and keep only the diverse molecules
     actives_testset = dict()
     if CLUSTER:
         clusters = utilities.clusterMols(actives)
@@ -81,13 +86,21 @@ def main(args):
             actives_testset.update(actives_filtered_out)
         actives = actives_kept
 
+    # estimate maximum distances between active molecules to set threshold for the application domain
+    # distance_actives = regression.estimateDistanceThreshold(actives) # median of distances between two actives
+    # min_distance_decoys, max_distance_decoys = regression.compareDistances(actives, decoys) # average min/max distance of closest/farthest decoy from any of the actives
+    # print "median of distances between two actives: " + str(distance_actives)
+    # print "average min/max distance of closest/farthest decoy from any of the actives: " + str(min_distance_decoys) + "/" + str(max_distance_decoys)
+
     # Support vector regression
-    # TODO: dodelat aplikacni domenu
     print "STARTING SUPPORT VECTOR REGRESSION..."
     regression_results = regression.supportVectorRegression(actives)
 
     # do something with the regression results
     regression.playWithResults(regression_results, decoys, actives_testset)
+
+def main(args):
+    trainModels()
 
 if __name__ == '__main__':
     main(sys.argv)
