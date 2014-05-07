@@ -1,6 +1,8 @@
 import sys
 import os
 import pickle
+from rdkit import Chem
+from rdkit.Chem import PropertyMol
 
 from datageneration import chembl, dud, fingerprinter, utilities
 from datageneration.params import *
@@ -58,11 +60,12 @@ def trainModels():
         fingerprinter.appendMorganFingerprints(compounds_all)
 
     actives = { cmpndid : compounds_all[cmpndid] for cmpndid in compounds_all.keys() if compounds_all[cmpndid]['active']}
+    pickle.dump(actives, open(ACTIVES_DUMP, 'wb'))
     decoys = { cmpndid : compounds_all[cmpndid] for cmpndid in compounds_all.keys() if not compounds_all[cmpndid]['active']}
 
     # train and cross-validate multiple Naive Bayes Classifiers
     classification_results = dict()
-    if not os.path.exists(CLASS_RESULTS_SAVE_FILE_PATH):
+    if not os.path.exists(CLASS_RESULTS_SAVE_FILE_PATH) or RELOAD_DATA:
         classification_results = classification.naiveBayesClassifierTraining(compounds_all)
         print "Saving results..."
         pickle.dump(classification_results, open(CLASS_RESULTS_SAVE_FILE_PATH, 'wb'))
@@ -72,7 +75,8 @@ def trainModels():
         classification_results = pickle.load(open(CLASS_RESULTS_SAVE_FILE_PATH, 'rb'))
 
     # have fun with the classification results
-    #classification.playWithResults(classification_results)
+    # print "# CLASSIFICATION STATISTICS #"
+    # classification.playWithResults(classification_results)
 
     # cluster actives according to their similarity and keep only the diverse molecules
     actives_testset = dict()
@@ -93,14 +97,42 @@ def trainModels():
     # print "average min/max distance of closest/farthest decoy from any of the actives: " + str(min_distance_decoys) + "/" + str(max_distance_decoys)
 
     # Support vector regression
-    print "STARTING SUPPORT VECTOR REGRESSION..."
-    regression_results = regression.supportVectorRegression(actives)
+    regression_results = dict()
+    if not os.path.exists(REGRESS_RESULTS_SAVE_FILE_PATH) or RELOAD_DATA:
+        regression_results = regression.supportVectorRegression(actives)
+        pickle.dump(regression_results, open(REGRESS_RESULTS_SAVE_FILE_PATH, 'wb'))
+    else:
+        regression_results = pickle.load(open(REGRESS_RESULTS_SAVE_FILE_PATH, 'rb'))
+
 
     # do something with the regression results
-    regression.playWithResults(regression_results, decoys, actives_testset)
+    # print "# REGRESSION STATISTICS #"
+    # regression.playWithResults(regression_results, decoys, actives_testset)
+
+    return classification_results['final_model'], regression_results['final_model']
+
+def predict(classmodel, regressmodel, molfile_path):
+    print "Starting predictions for: " + molfile_path
+    suppl = Chem.SDMolSupplier(molfile_path)
+    mols = dict()
+    for mol in suppl:
+        pmol = PropertyMol.PropertyMol(mol)
+        mols[pmol.GetProp("_Name")] = {"RDKit" : pmol}
+    fingerprinter.appendMorganFingerprints(mols, dump=None)
+    actives = pickle.load(open(ACTIVES_DUMP, 'rb'))
+
+    for mol in mols:
+        prediction = classmodel.predict(mols[mol]['fingerprint'])
+        fingerprints_actives = utilities.getFingerprintList(actives)[0]
+        min_distance = utilities.getMolDistFromSet(mols[mol]['fingerprint'], fingerprints_actives)[0]
+        if min_distance <= APPLICATION_DOMAIN_DISTANCE_THRESHOLD and prediction[0]:
+            print  mol + " is active"
+            print "Predicted pIC50: " + str(regressmodel.predict(mols[mol]['fingerprint'])[0])
 
 def main(args):
-    trainModels()
+    classmodel, regressmodel = trainModels()
+    molfile = DECOYS_SDF_FILE_PATH
+    predict(classmodel, regressmodel, molfile)
 
 if __name__ == '__main__':
     main(sys.argv)

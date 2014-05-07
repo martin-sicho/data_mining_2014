@@ -14,6 +14,7 @@ def naiveBayesClassifierTraining(compounds_all):
     activity_data = numpy.asarray(activity_data)
 
     # perform K-fold cross-validation
+    classifier = GaussianNB()
     kfold_xv_strat = cross_validation.StratifiedKFold(activity_data, NB_FOLDS, indices=False)
     confusion_matrices = []
     probabilities = []
@@ -28,7 +29,6 @@ def naiveBayesClassifierTraining(compounds_all):
         activity_data_test = activity_data[test]
 
         # model building
-        classifier = GaussianNB()
         classifier.fit(fingerprint_data_train, activity_data_train)
 
         # testing
@@ -48,6 +48,7 @@ def naiveBayesClassifierTraining(compounds_all):
         # ROC curves
         fpr, tpr, thresholds = roc_curve(activity_data_test, probability_estimates[:, 1])
         aucs.append(auc(fpr, tpr))
+    classifier.fit(fingerprint_data, activity_data)
     print "Done."
     return {
         'confusion_matrices' : confusion_matrices
@@ -58,10 +59,12 @@ def naiveBayesClassifierTraining(compounds_all):
         , 'AUCs' : aucs
         , 'fingerprint_data' : fingerprint_data
         , 'activity_data' : activity_data
+        , 'final_model' : classifier
     }
 
 def playWithResults(classification_results):
     best_model_idx = classification_results['scores'].index(max(classification_results['scores']))
+    print "Average AUC: " + str(numpy.mean(classification_results['AUCs']))
     print "BEST MODEL DETAILS:"
     print "Confusion matrix: "
     print classification_results['confusion_matrices'][best_model_idx]

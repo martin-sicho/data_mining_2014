@@ -4,7 +4,7 @@ from params import *
 from rdkit.Chem import AllChem
 
 
-def appendMorganFingerprints(compounds):
+def appendMorganFingerprints(compounds, dump=MERGED_DATASET_PATH):
     print "Computing Morgan Fingerprints..."
     for cmnd_id in compounds.keys():
         mol = compounds[cmnd_id]['RDKit']
@@ -13,5 +13,6 @@ def appendMorganFingerprints(compounds):
         fp = AllChem.GetMorganFingerprintAsBitVect(mol, MORGAN_RADIUS, nBits=MORGAN_LENGTH, bitInfo=info)
         compounds[cmnd_id]['fingerprint'] = fp #list(fp.ToBitString())
         #compounds[cmnd_id]['fingerprint_info'] = info
-    pickle.dump(compounds, open(MERGED_DATASET_PATH, "wb"))
+    if dump:
+        pickle.dump(compounds, open(dump, "wb"))
     print "Done."

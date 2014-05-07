@@ -41,6 +41,7 @@ def supportVectorRegression(actives):
         predicted_values.append(clf.predict(fingerprint_data_test))
         true_values.append(activity_data_test)
         scores.append(clf.score(fingerprint_data_test, activity_data_test))
+    print "Done."
     return {
         'predicted_values' : predicted_values
         , 'true_values' : true_values
