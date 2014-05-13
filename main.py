@@ -4,14 +4,14 @@ import pickle
 from rdkit import Chem
 from rdkit.Chem import PropertyMol
 
-from datageneration import chembl, dud, fingerprinter, utilities
-from datageneration.params import *
+from datamanipulation import chembl, dud, fingerprinter, utilities
+from datamanipulation.params import *
 from modeling import classification, regression
 
 def trainModels():
     """
-        Uses datageneration and modeling modules to train and validate models for a specific target.
-        Use datageneration.params and modeling.params to set training and validation options.
+        Uses datamanipulation and modeling modules to train and validate models for a specific target.
+        Use datamanipulation.params and modeling.params to set training and validation options.
 
         This method roughly proceeds as follows:
             1. load ChEMBL data for molecules with IC50 (in nM) less than or equal to IC_50_THRESHOLD and convert them to RDKit molecules

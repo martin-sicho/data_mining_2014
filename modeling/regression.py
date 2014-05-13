@@ -2,7 +2,7 @@ import numpy
 from sklearn import svm, cross_validation
 from params import *
 import matplotlib.pyplot as plt
-from datageneration import utilities
+from datamanipulation import utilities
 
 def supportVectorRegression(actives):
     print "Performing Support Vector Regression..."

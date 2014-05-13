@@ -14,7 +14,7 @@ CLUSTER = True
 CLUSTERING_TANIMOTO_CUTOFF = 0.15
 APPLICABILITY_DOMAIN_DISTANCE_THRESHOLD = CLUSTERING_TANIMOTO_CUTOFF
 
-# datageneration parameters
+# datamanipulation parameters
 XML_FILENAME = "actives_chembl.xml"
 PICKLE_FILENAME = XML_FILENAME[:-4] + ".p"
 MERGED_DATASET_PATH = DATA_FOLDER_PATH + "complete_dataset.p"
