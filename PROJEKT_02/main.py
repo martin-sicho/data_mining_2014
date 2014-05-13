@@ -45,7 +45,12 @@ def trainModels():
     if os.path.exists(DECOYS_SDF_FILE_PATH[:-4] + ".p"):
         decoys = pickle.load(open(DECOYS_SDF_FILE_PATH[:-4] + ".p", 'rb'))
     else:
-        decoys = dud.getDecoys(DECOYS_SDF_FILE_PATH)
+        if os.path.exists(DECOYS_SDF_FILE_PATH):
+            decoys = dud.getDecoys(DECOYS_SDF_FILE_PATH)
+        else:
+            print "Decoys not found in: " + DECOYS_SDF_FILE_PATH
+            print "Make sure you set the right path."
+            exit()
 
     # merge both data sets
     compounds_all = {}
@@ -75,8 +80,8 @@ def trainModels():
         classification_results = pickle.load(open(CLASS_RESULTS_SAVE_FILE_PATH, 'rb'))
 
     # have fun with the classification results
-    # print "# CLASSIFICATION STATISTICS #"
-    # classification.playWithResults(classification_results)
+    print "# CLASSIFICATION STATISTICS #"
+    classification.playWithResults(classification_results)
 
     # cluster actives according to their similarity and keep only the diverse molecules
     actives_testset = dict()
@@ -106,8 +111,8 @@ def trainModels():
 
 
     # do something with the regression results
-    # print "# REGRESSION STATISTICS #"
-    # regression.playWithResults(regression_results, decoys, actives_testset)
+    print "# REGRESSION STATISTICS #"
+    regression.playWithResults(regression_results, decoys, actives_testset)
 
     return classification_results['final_model'], regression_results['final_model']
 
@@ -121,16 +126,24 @@ def predict(classmodel, regressmodel, molfile_path):
     fingerprinter.appendMorganFingerprints(mols, dump=None)
     actives = pickle.load(open(ACTIVES_DUMP, 'rb'))
 
+    found_sth = False
     for mol in mols:
         prediction = classmodel.predict(mols[mol]['fingerprint'])
         fingerprints_actives = utilities.getFingerprintList(actives)[0]
         min_distance = utilities.getMolDistFromSet(mols[mol]['fingerprint'], fingerprints_actives)[0]
-        if min_distance <= APPLICATION_DOMAIN_DISTANCE_THRESHOLD and prediction[0]:
+        if min_distance <= APPLICABILITY_DOMAIN_DISTANCE_THRESHOLD and prediction[0]:
             print  mol + " is active"
             print "Predicted pIC50: " + str(regressmodel.predict(mols[mol]['fingerprint'])[0])
+            found_sth = True
+    if not found_sth:
+        print "None of the molecules within the specified set were found to be active."
+
 
 def main(args):
+    # build the models
     classmodel, regressmodel = trainModels()
+
+    # test the activity prediction on the set of downloaded decoys
     molfile = DECOYS_SDF_FILE_PATH
     predict(classmodel, regressmodel, molfile)
 

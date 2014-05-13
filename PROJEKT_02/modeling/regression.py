@@ -99,13 +99,14 @@ def playWithResults(results, decoys, actives_test_set):
     #print "Score of final model on the validation set: " + str(final_model.score(results['fingerprint_data_validation_set'], results['activity_data_validation_set']))
     print "Score of final model on the molecules filtered out during clustering: " + str(final_model.score(actives_test_set_fps, actives_test_set_pic50))
 
-    span = (8, 11)
+    span = (min(results['activity_data']) - 0.25, max(results['activity_data'] + 0.25))
+
     plt.plot((span[0],span[1]), (span[0],span[1]), linestyle='--')
     #plt.plot(results['activity_data_validation_set'], predictions_all, marker='o', linestyle='None', label="Validation set performance")
     #plt.plot(true_best, predicted_best, marker='+', linestyle='None', label="Performance of the best model in the particular X-validation step")
     #plt.plot(zeros, predictions_decoys, marker='o', linestyle='None', label="decoys")
-    plt.plot(actives_test_set_pic50, predictions_test_set, marker='o', linestyle='None', label="Performance on the filtered out molecules during clustering")
     plt.plot(results['activity_data'], predicted_train, marker='o', linestyle='None', label="Performance on the training set")
+    plt.plot(actives_test_set_pic50, predictions_test_set, marker='o', linestyle='None', label="Performance on the molecules filtered out during clustering (validation set)")
     plt.xlabel('True values')
     plt.ylabel('Predicted values')
     plt.ylim(span)
