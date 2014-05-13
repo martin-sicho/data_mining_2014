@@ -1,4 +1,3 @@
-*/.idea/*
 .idea/*
-PROJEKT_02/data/*
+data/*
 *.pyc
