@@ -136,7 +136,7 @@ def predict(classmodel, regressmodel, molfile_path):
             print "Predicted pIC50: " + str(regressmodel.predict(mols[mol]['fingerprint'])[0])
             found_sth = True
     if not found_sth:
-        print "None of the molecules within the specified set were found to be active."
+        print "None of the molecules within the specified set was found to be active."
 
 
 def main(args):
